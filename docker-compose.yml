@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # Central Orchestrator and API Gateway
+  orchestrator:
+    build: ./orchestrator
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@material-db:5432/omuasim
+      - INGESTOR_URL=http://ingestor:8001
+      - TIDAL_SIM_URL=http://tidal-simulator:8002
+      - THERMO_URL=http://thermodynamic-modeler:8003
+      - OUTGASSING_URL=http://outgassing-engine:8004
+      - TRAJECTORY_URL=http://trajectory-analyzer:8005
+    depends_on:
+      - material-db
+    volumes:
+      - ./shared:/app/shared
+    networks:
+      - omuasim-network
+
+  # Data Ingestor and Orbital Modeler
+  ingestor:
+    build: ./ingestor
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@material-db:5432/omuasim
+    depends_on:
+      - material-db
+    volumes:
+      - ./shared:/app/shared
+      - ./data:/app/data
+    networks:
+      - omuasim-network
+
+  # Material Properties Database
+  material-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=omuasim
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./material-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - omuasim-network
+
+  # Tidal Force Simulator
+  tidal-simulator:
+    build: ./tidal-simulator
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@material-db:5432/omuasim
+    depends_on:
+      - material-db
+    volumes:
+      - ./shared:/app/shared
+    networks:
+      - omuasim-network
+
+  # Thermodynamic Modeler
+  thermodynamic-modeler:
+    build: ./thermodynamic-modeler
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@material-db:5432/omuasim
+    depends_on:
+      - material-db
+      - tidal-simulator
+    volumes:
+      - ./shared:/app/shared
+    networks:
+      - omuasim-network
+
+  # Sublimation & Outgassing Engine
+  outgassing-engine:
+    build: ./outgassing-engine
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@material-db:5432/omuasim
+    depends_on:
+      - material-db
+      - thermodynamic-modeler
+    volumes:
+      - ./shared:/app/shared
+    networks:
+      - omuasim-network
+
+  # Thrust & Trajectory Analyzer
+  trajectory-analyzer:
+    build: ./trajectory-analyzer
+    ports:
+      - "8005:8005"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@material-db:5432/omuasim
+    depends_on:
+      - material-db
+      - ingestor
+      - outgassing-engine
+    volumes:
+      - ./shared:/app/shared
+    networks:
+      - omuasim-network
+
+volumes:
+  postgres_data:
+
+networks:
+  omuasim-network:
+    driver: bridge
