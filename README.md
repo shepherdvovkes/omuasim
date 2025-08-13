@@ -1,3 +1,13 @@
+  ___   __  __   _   _   ___   ___   ___   __  __ 
+ / _ \ |  \/  | / \ | | | |_ _|/ ___|/ _ \ |  \/  |
+| | | || |\/| |/ _ \| | | || |\___ \| | | || |\/| |
+| |_| || |  | / ___ \ |_| || | ___) | |_| || |  | |
+ \___/ |_|  |_/_/   \_\___/|___|____/\___/ |_|  |_|
+                                                    
+    🚀 'Oumuamua Simulator 🛸
+    Exploring the Anomalous Acceleration
+    =====================================
+
 # 'Oumuamua Simulator
 
 Architecture for simulating and analyzing the anomalous acceleration of the 'Oumuamua object through physical modeling.
